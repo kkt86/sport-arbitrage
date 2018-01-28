@@ -17,7 +17,7 @@ class TestDashboardScraper(unittest.TestCase):
         scraper = DashboardScraper()
         scraper.connect()
 
-        games = scraper.get_games_elements()
-        odd_matrices = scraper.get_odd_matrices()
+        games = scraper._get_games_elements()
+        odd_matrices = scraper._get_odd_matrices()
         self.assertEqual(len(games),len(odd_matrices))
         scraper.disconnect()
