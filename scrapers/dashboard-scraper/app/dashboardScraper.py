@@ -136,7 +136,8 @@ class DashboardScraper():
         :return: None
         """
         try:
-            self.driver = webdriver.PhantomJS()
+            #self.driver = webdriver.PhantomJS()
+            self.driver = webdriver.Firefox()
             self.driver.get(url)
         except Exception as e:
             print(e)
