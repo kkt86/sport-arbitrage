@@ -5,7 +5,7 @@ from datetime import datetime
 import pandas as pd
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
+
 
 
 class DashboardScraper():
@@ -13,8 +13,10 @@ class DashboardScraper():
         """
         Scraper class, interacting with the sporting dashboard on http://184.73.28.182/
         """
-
-        self.driver = webdriver.Firefox()
+        # set up chrome options
+        options = webdriver.ChromeOptions()
+        options.add_argument("headless")
+        self.driver = webdriver.Chrome(chrome_options=options)
         self.expanded_mode = False
 
     def connect(self, url='http://184.73.28.182/'):
@@ -86,12 +88,12 @@ class DashboardScraper():
         # obtain list of namedtuples
         scraped_games = []
         for game, odds_matrix in zip(games, odds_matrices):
-            scraped_games.append(self._get_tumple_from_game(game, odds_matrix))
+            scraped_games.append(self._get_tuple_from_game(game, odds_matrix))
         return scraped_games
 
-    def _get_tumple_from_game(self, game, odd_matrix):
+    def _get_tuple_from_game(self, game, odd_matrix):
         """
-        Function which extracts information from game and odd_matric selenium elements, and returns a namedtumple with
+        Function which extracts information from game and odd_matric selenium elements, and returns a namedtuple with
         the following fields:
             * timestamp     : string containing the query time
             * date          : string containing the date of the match
@@ -112,7 +114,7 @@ class DashboardScraper():
         scraped_game.game = str(game_contents[1])
         scraped_game.league = str(game_contents[2])
         # get single rows from odd matrix
-        table = odd_matrix.find_element(By.CLASS_NAME, 'table-striped.table-bordered')
+        table = odd_matrix.find_element(By.CLASS_NAME, 'accordian-body').find_element(By.CLASS_NAME, 'table-striped')
         table_body = table.find_element(By.CSS_SELECTOR,'tbody')
         table_body_elements = table_body.find_elements(By.CSS_SELECTOR, 'tr')
         # add column in scraped_odd_matrix, containing the bookie as column name, and odds as values
@@ -120,9 +122,9 @@ class DashboardScraper():
         for body in table_body_elements:
             body_elements = body.find_elements(By.CSS_SELECTOR, 'td')
             bookie = str(body_elements[0].text)
-            odds_1 = float(body_elements[1].text.split('\n')[0])
-            odds_X = float(body_elements[2].text.split('\n')[0])
-            odds_2 = float(body_elements[3].text.split('\n')[0])
+            odds_1 = body_elements[1].text.split('\n')[0]
+            odds_X = body_elements[2].text.split('\n')[0]
+            odds_2 = body_elements[3].text.split('\n')[0]
             scraped_odd_matrix[bookie] = pd.Series([odds_1, odds_X, odds_2], index=scraped_odd_matrix.index)
         scraped_game.odd_matrix = scraped_odd_matrix
         return scraped_game
