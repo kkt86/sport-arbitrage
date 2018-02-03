@@ -181,7 +181,7 @@ class DashboardScraper():
             game_contents = [element.text for element in game.find_elements_by_css_selector('td')]
 
             game_info = {}
-            game_info['timestamp'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            game_info['timestamp'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             game_info['sport'] = str(game_contents[0])
             game_info['match_title'] = str(game_contents[1])
             game_info['league'] = str(game_contents[2])
@@ -199,12 +199,12 @@ class DashboardScraper():
     def _get_info_from_odds_matrix(self, odds_matrix):
         """
         Extracts info from odds_matrix and returns an array of named tuples, each having the following fields:
-        bookie | odds_1 | timestamp_1 | odds_X | timestamp_X | odds_2 | timestamp_2
+        bookie | odds_1 | odds_X | odds_2
         :param odds_matrix: element containing the odds_matrix
         :return: Array of named tuples
         """
         # extract rows from odds_matrix (in table_body_elements
-        table = odds_matrix.find_element(By.CLASS_NAME, 'table-striped.table-bordered')
+        table = odds_matrix.find_element(By.CLASS_NAME, 'accordian-body').find_element(By.CLASS_NAME, 'table-striped')
         table_body = table.find_element(By.CSS_SELECTOR,'tbody')
         table_body_elements = table_body.find_elements(By.CSS_SELECTOR, 'tr')
         # for each element, extract information and return named tuple
@@ -213,12 +213,9 @@ class DashboardScraper():
             body_elements = body.find_elements(By.CSS_SELECTOR, 'td')
             odds_info = {}
             odds_info['bookie'] = str(body_elements[0].text)
-            odds_info['odds_1'] = float(body_elements[1].text.split('\n')[0])
-            odds_info['timestamp_1'] = str(body_elements[1].text.split('\n')[1])
-            odds_info['odds_X'] = float(body_elements[2].text.split('\n')[0])
-            odds_info['timestamp_X'] = str(body_elements[2].text.split('\n')[1])
-            odds_info['odds_2'] = float(body_elements[3].text.split('\n')[0])
-            odds_info['timestamp_2'] = str(body_elements[3].text.split('\n')[1])
+            odds_info['odds_1'] = body_elements[1].text.split('\n')[0]
+            odds_info['odds_X'] = body_elements[2].text.split('\n')[0]
+            odds_info['odds_2'] = body_elements[3].text.split('\n')[0]
             odds_info_array.append(odds_info)
 
         return odds_info_array
@@ -228,9 +225,9 @@ if __name__ == '__main__':
     scraper = DashboardScraper()
     scraper.connect()
 
-    games = scraper.get_tuples_data()
+    games = scraper.get_json_data()
 
     for game in games:
-        print(game.odd_matrix)
+        print(game)
 
     scraper.disconnect()
