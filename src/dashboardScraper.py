@@ -2,13 +2,13 @@ from __future__ import print_function
 
 from collections import namedtuple
 from datetime import datetime
+import joblib
 import pandas as pd
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 
 
-
-class DashboardScraper():
+class DashboardScraper:
     def __init__(self):
         """
         Scraper class, interacting with the sporting dashboard on http://184.73.28.182/
@@ -16,7 +16,8 @@ class DashboardScraper():
         # set up chrome options
         options = webdriver.ChromeOptions()
         options.add_argument("headless")
-        self.driver = webdriver.Chrome(chrome_options=options)
+        #self.driver = webdriver.Chrome(chrome_options=options)
+        self.driver = webdriver.Chrome()
         self.expanded_mode = False
 
     def connect(self, url='http://184.73.28.182/'):
@@ -230,4 +231,7 @@ if __name__ == '__main__':
     for game in games:
         print(game)
 
+    joblib.dump(games, "sample.dat")
+
     scraper.disconnect()
+

@@ -1,6 +1,6 @@
 from flask import Flask, jsonify
 
-from src.dashboardScraper import DashboardScraper
+from dashboardScraper import DashboardScraper
 
 # app variable (should be the same for each Flask app)
 app = Flask(__name__)

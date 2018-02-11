@@ -54,7 +54,7 @@ class ArbitrageOptimizer:
                 return {'arbitrage': 'no'}
             else:
                 # arbitrage exists for this game
-                output = {'abitrage' : 'yes'}
+                output = {'arbitrage' : 'yes'}
                 # compute arbitrage profit
                 output['profit'] = 1 - sum_inverse_odds
                 # get bookies for best odds
