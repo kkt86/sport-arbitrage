@@ -1,4 +1,5 @@
 import pandas as pd
+from scipy.optimize import minimize
 
 
 class ArbitrageOptimizer:
@@ -38,15 +39,19 @@ class ArbitrageOptimizer:
         except ValueError:
             return 0.0
 
-    def get_arbitrage_opportunity(self):
+    def get_arbitrage_opportunity(self, available_bookies=['bet365', 'Interwetten', 'William Hill', 'Unibet',
+                                                           'bwin', 'Tipico']):
         """
         This function evaluates if there exist an arbitrage opportunity in the current game, and if yes, returns the
         the amounth to be bet on each odd
         :return:
         """
         try:
+            # remove columns from odd_matrix, for which bookie is not in available_bookies
+            bookies_mask = [bookie in available_bookies for bookie in self._odds_matrix.columns]
+            filtered_odd_matrix = self._odds_matrix.iloc[:,bookies_mask]
             # get max odds for each outcome
-            max_odds = self._odds_matrix.max(axis=1)
+            max_odds = filtered_odd_matrix.max(axis=1)
             # check if the sum of the inverses of the max odds is less then one, if yes, arbitrage opportunity exists
             sum_inverse_odds = sum(1/max_odds)
             if sum_inverse_odds >= 1.:
@@ -58,9 +63,9 @@ class ArbitrageOptimizer:
                 # compute arbitrage profit
                 output['profit'] = 1 - sum_inverse_odds
                 # get bookies for best odds
-                bookie_odds_1 = self._odds_matrix.columns[self._odds_matrix.loc['1'] == max_odds.loc['1']][0]
-                bookie_odds_X = self._odds_matrix.columns[self._odds_matrix.loc['X'] == max_odds.loc['X']][0]
-                bookie_odds_2 = self._odds_matrix.columns[self._odds_matrix.loc['2'] == max_odds.loc['2']][0]
+                bookie_odds_1 = filtered_odd_matrix.columns[filtered_odd_matrix.loc['1'] == max_odds.loc['1']][0]
+                bookie_odds_X = filtered_odd_matrix.columns[filtered_odd_matrix.loc['X'] == max_odds.loc['X']][0]
+                bookie_odds_2 = filtered_odd_matrix.columns[filtered_odd_matrix.loc['2'] == max_odds.loc['2']][0]
                 # compute amounth to bet on each outcome
                 probabilities = 1/max_odds
                 amounth_1 = probabilities['1']/sum(probabilities)
@@ -107,6 +112,32 @@ class ArbitrageOptimizer:
             odd_matrix[bookie] = pd.to_numeric(pd.Series([odds_1, odds_X, odds_2], index=odd_matrix.index),
                                                errors='coerce')
         self._odds_matrix = odd_matrix
+
+    @staticmethod
+    def get_optimal_bets(ratios, upper_bounds, lower_bounds):
+        """
+        This function computes the optimal bet sizes, once provided upper and lower bounds for the bets,
+        and the arbitrage ratios
+        :param ratios: array of floats, containing the ratios to be bet at ([ratio_1, ratio_X, ratio_2])
+        :param upper_bounds: array of floats, containing the upper bounds (based on availabel capital)
+               ([upper_bound_1, upper_bound_X, upper_bound_2])
+        :param lower_bounds: array of floats, containing the lower bounds (based on minimum betting capital)
+               ([lower_bound_1, lower_bound_X, lower_bound_2])
+        :return: array of optimal bets to be placed ([bet_1, bet_X, bet_2])
+        """
+        # define constraints to be used in the optimization problem
+        cons = (
+            {'type': 'ineq', 'fun': lambda x: x[0]*ratios[0] - lower_bounds[0]},
+            {'type': 'ineq', 'fun': lambda x: upper_bounds[0] - x[0]*ratios[0]},
+            {'type': 'ineq', 'fun': lambda x: x[0]*ratios[1] - lower_bounds[1]},
+            {'type': 'ineq', 'fun': lambda x: upper_bounds[1] - x[0]*ratios[1]},
+            {'type': 'ineq', 'fun': lambda x: x[0]*ratios[2] - lower_bounds[2]},
+            {'type': 'ineq', 'fun': lambda x: upper_bounds[2] - x[0]*ratios[2]}
+        )
+        # maximaze the betting capital, based on constraints
+        res = minimize(fun=lambda x: -x[0], x0=[1], constraints=cons)
+        # return bets
+        return res.x*ratios
 
 
 if __name__ == '__main__':
