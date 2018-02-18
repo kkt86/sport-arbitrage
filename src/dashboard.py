@@ -3,15 +3,17 @@ import pandas as pd
 from dashboardScraper import DashboardScraper
 from arbitrageOptimizer import ArbitrageOptimizer
 
-from bokeh.io import show, output_file
-from bokeh.layouts import column, row, widgetbox
+from bokeh.layouts import column, row
 from bokeh.models import ColumnDataSource
 from bokeh.models.widgets import Button, DataTable, Panel, TableColumn, Tabs, TextInput
-from bokeh.plotting import figure, curdoc
+from bokeh.plotting import curdoc
 
 
 # load games
-games = joblib.load('../data/sample.dat')
+# games = joblib.load('../data/sample.dat')
+dashboardScraper = DashboardScraper()
+dashboardScraper.connect()
+games = dashboardScraper.get_json_data()
 
 
 # create table of the current opportunities
@@ -103,7 +105,9 @@ def get_arbitrage_table(game):
         ]
 
         data_table = DataTable(source=source, columns=columns, width=500, height=200)
-        return data_table, arbitrage_opportunity['profit']
+        return data_table, arbitrage_opportunity['profit'], arbitrage_opportunity['league'], \
+               arbitrage_opportunity['match_title'], arbitrage_opportunity['date'], \
+               arbitrage_opportunity['time_to_match']
 
 # create separate tabs for the arbitrage opportunities
 arbitrage_tables = []
@@ -118,7 +122,13 @@ arbitrage_tables.sort(key=lambda x: x[1], reverse=True)
 tabs = []
 for arbitrage_table in arbitrage_tables:
     profit = str(round(100*arbitrage_table[1],1))
-    tabs.append(Panel(child=arbitrage_table[0], title="Profit : {}".format(profit)))
+    # create tab and info about the game to be appended
+    table = arbitrage_table[0]
+    info_league = TextInput(title="League", value=str(arbitrage_table[2]), width=300)
+    info_match = TextInput(title="Match", value=str(arbitrage_table[3]), width=300)
+    info_time_to_game = TextInput(title="Time to game", value=str(arbitrage_table[5]), width=300)
+    child_tab = column(table, row(info_league, info_match, info_time_to_game))
+    tabs.append(Panel(child=child_tab, title="Profit : {}".format(profit)))
 
 # create text inputs for calculating optimal bets
 upper_bound_1 = TextInput(title="Upper bound 1", width=300)

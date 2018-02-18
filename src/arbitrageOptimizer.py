@@ -60,6 +60,11 @@ class ArbitrageOptimizer:
             else:
                 # arbitrage exists for this game
                 output = {'arbitrage' : 'yes'}
+                # information about the game
+                output['league'] = self._league
+                output['match_title'] = self._match_title
+                output['date'] = self._date
+                output['time_to_match'] = self._time_to_match
                 # compute arbitrage profit
                 output['profit'] = 1 - sum_inverse_odds
                 # get bookies for best odds

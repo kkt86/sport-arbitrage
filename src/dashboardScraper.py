@@ -231,7 +231,7 @@ if __name__ == '__main__':
     for game in games:
         print(game)
 
-    joblib.dump(games, "sample.dat")
+    #joblib.dump(games, "sample.dat")
 
     scraper.disconnect()
 
